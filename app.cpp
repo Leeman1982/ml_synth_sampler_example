@@ -45,6 +45,7 @@
 
 #include "config.h"
 #include "app.h"
+#include "ui.h"
 
 
 #include <Arduino.h>
@@ -322,7 +323,7 @@ void App_Setup(void)
 }
 
 
-#ifdef ESP32
+#if (defined ESP32) || (defined ARDUINO_ARCH_RP2040)
 
 
 void App_Setup1(void)
@@ -347,6 +348,8 @@ void App_Setup1(void)
 #ifdef ADC_ENABLED
     AdcSetup();
 #endif
+
+    UI_Setup();
 }
 
 void App_Loop1(void)
@@ -374,8 +377,10 @@ void App_Loop1(void)
 #ifdef TFT_ENABLED
     /* tft code could be here */
 #endif
+
+    UI_Loop();
 }
-#endif /* ESP32 */
+#endif /* ESP32 || ARDUINO_ARCH_RP2040 */
 
 
 /**
