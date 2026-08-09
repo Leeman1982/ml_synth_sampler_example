@@ -46,7 +46,7 @@ void Core0TaskInit(void);
 void Core0Task(void *parameter);
 #endif
 
-#ifdef ARDUINO_RP2040
+#ifdef ARDUINO_ARCH_RP2040
 volatile bool g_setup_done = false;
 #endif
 
@@ -56,7 +56,7 @@ void setup()
     Serial.begin(115200);
     App_Setup();
 
-#ifdef ARDUINO_RP2040
+#ifdef ARDUINO_ARCH_RP2040
     g_setup_done = true;
 #endif
 
@@ -70,7 +70,7 @@ void loop()
     App_Loop();
 }
 
-#ifdef ARDUINO_RP2040
+#ifdef ARDUINO_ARCH_RP2040
 
 void wait_until_setup_finished(void)
 {
