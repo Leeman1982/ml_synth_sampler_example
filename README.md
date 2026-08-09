@@ -15,6 +15,10 @@ Supported versions of board library
 This project is an example supporting the following platforms:
 - ESP32, RP2040: for more details look <a href="doc/board_info.md">here</a>
 
+For a complete, step-by-step guide to flashing this project onto a
+Raspberry Pi Pico (RP2040) or Pico 2 (RP2350) using the Arduino IDE, see
+<a href="doc/rp2040_arduino_ide_setup.md">doc/rp2040_arduino_ide_setup.md</a>.
+
 
 I would recommend to take a look at the loaddata_examples.ino
 Here you would find different possibilities to load data into the sampler:
@@ -44,6 +48,8 @@ More information will be available in future
 - locate **ml_synth_sampler_example.ino** in your project folder and open it within the Arduino IDE
 ### Step 4: Choose your configuration
 - This project might be compatible for different configurations. You could choose the ESP32 in your board manager as an example. Compatible and tested configurations are listed here: [board_info](doc/board_info.md)
+- If you are targeting a Raspberry Pi Pico / Pico 2 (RP2040 / RP2350), follow
+  the dedicated guide here: [doc/rp2040_arduino_ide_setup.md](doc/rp2040_arduino_ide_setup.md)
 ### Step 5: Run the compilation
 - You can run the compiler
 ### Step 6: Upload the firmware
