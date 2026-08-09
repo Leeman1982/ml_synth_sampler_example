@@ -14,15 +14,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * Dieses Programm ist Freie Software: Sie können es unter den Bedingungen
+ * Dieses Programm ist Freie Software: Sie kÃ¶nnen es unter den Bedingungen
  * der GNU General Public License, wie von der Free Software Foundation,
  * Version 3 der Lizenz oder (nach Ihrer Wahl) jeder neueren
- * veröffentlichten Version, weiter verteilen und/oder modifizieren.
+ * verÃ¶ffentlichten Version, weiter verteilen und/oder modifizieren.
  *
- * Dieses Programm wird in der Hoffnung bereitgestellt, dass es nützlich sein wird, jedoch
- * OHNE JEDE GEWÄHR,; sogar ohne die implizite
- * Gewähr der MARKTFÄHIGKEIT oder EIGNUNG FÜR EINEN BESTIMMTEN ZWECK.
- * Siehe die GNU General Public License für weitere Einzelheiten.
+ * Dieses Programm wird in der Hoffnung bereitgestellt, dass es nÃ¼tzlich sein wird, jedoch
+ * OHNE JEDE GEWÃ„HR,; sogar ohne die implizite
+ * GewÃ¤hr der MARKTFÃ„HIGKEIT oder EIGNUNG FÃœR EINEN BESTIMMTEN ZWECK.
+ * Siehe die GNU General Public License fÃ¼r weitere Einzelheiten.
  *
  * Sie sollten eine Kopie der GNU General Public License zusammen mit diesem
  * Programm erhalten haben. Wenn nicht, siehe <https://www.gnu.org/licenses/>.
@@ -48,6 +48,32 @@
 #define MIDI_RX1_PIN    13
 #define MIDI_TX1_PIN    12
 //#define USE_ML_SYNTH_PRO /* needs the pro library */
+
+/*
+ * RP2350 has enough RAM headroom (~520KB total) to run the full
+ * phaser/vibrato/pitch-shifter/tremolo/reverb chain alongside the sampler
+ * buffer - unlike RP2040, see config_rp2040.h. This also activates the
+ * matching MIDI CCs already defined in z_config.ino and the Effects menu
+ * entries added by ui.cpp, see doc/oled_encoder_ui.md.
+ */
+#define REVERB_ENABLED
+
+/*
+ * SH1106 128x64 I2C OLED + rotary encoder (push-select) + 2 momentary buttons
+ * See doc/oled_encoder_ui.md for wiring details and the full feature list.
+ */
+#define UI_OLED_ENABLED
+#define UI_OLED_I2C_SDA_PIN     16
+#define UI_OLED_I2C_SCL_PIN     17
+#define UI_OLED_I2C_ADDR        0x3C
+
+#define UI_ENC_A_PIN            10
+#define UI_ENC_B_PIN            11
+#define UI_ENC_SW_PIN           14
+
+#define UI_BTN_BACK_PIN         15
+#define UI_BTN_HOME_PIN         20
+
 #if defined(PICO_DEFAULT_LED_PIN)
 #define BLINK_LED_PIN PICO_DEFAULT_LED_PIN
 #elif defined(LED_BUILTIN)
