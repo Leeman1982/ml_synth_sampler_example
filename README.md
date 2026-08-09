@@ -19,6 +19,13 @@ For a complete, step-by-step guide to flashing this project onto a
 Raspberry Pi Pico (RP2040) or Pico 2 (RP2350) using the Arduino IDE, see
 <a href="doc/rp2040_arduino_ide_setup.md">doc/rp2040_arduino_ide_setup.md</a>.
 
+On RP2040/RP2350 you can also drive the sampler entirely from the device
+itself: a SH1106 OLED, a rotary encoder with push-select, and two momentary
+buttons give you a full menu for loading samples, adjusting sampler
+parameters, effects, and input gain - no MIDI controller required. See
+<a href="doc/oled_encoder_ui.md">doc/oled_encoder_ui.md</a> for wiring and
+the full feature list.
+
 
 I would recommend to take a look at the loaddata_examples.ino
 Here you would find different possibilities to load data into the sampler:
@@ -50,6 +57,9 @@ More information will be available in future
 - This project might be compatible for different configurations. You could choose the ESP32 in your board manager as an example. Compatible and tested configurations are listed here: [board_info](doc/board_info.md)
 - If you are targeting a Raspberry Pi Pico / Pico 2 (RP2040 / RP2350), follow
   the dedicated guide here: [doc/rp2040_arduino_ide_setup.md](doc/rp2040_arduino_ide_setup.md)
+- If you have a SH1106 OLED + rotary encoder + buttons wired up (RP2040/RP2350
+  only), see [doc/oled_encoder_ui.md](doc/oled_encoder_ui.md) - you'll also
+  need the **U8g2** library (Library Manager) installed.
 ### Step 5: Run the compilation
 - You can run the compiler
 ### Step 6: Upload the firmware
