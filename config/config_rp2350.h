@@ -59,6 +59,14 @@
 #define REVERB_ENABLED
 
 /*
+ * Sample RAM pool: rather than guessing a fixed size at compile time, start
+ * big and let app.cpp shrink the allocation until it fits whatever RAM is
+ * actually left after the reverb/delay/UI buffers. See doc/sample_capacity.md.
+ */
+#define SAMPLER_RAM_BUFFER_MAX_SAMPLES  (1024 * 300)
+#define SAMPLER_RAM_BUFFER_MIN_SAMPLES  (1024 * 8)
+
+/*
  * SH1106 128x64 I2C OLED + rotary encoder (push-select) + 2 momentary buttons
  * See doc/oled_encoder_ui.md for wiring details and the full feature list.
  */
@@ -80,8 +88,6 @@
 #define BLINK_LED_PIN LED_BUILTIN
 //#define WS2812_PIN 3
 #define STATUS_SIMPLE
-//#define REVERB_ENABLED
-#define SAMPLER_STATIC_BUFFER_SAMPLE_CNT   (1024 * 128)
 //#define LED_COUNT 4
 #else
 #define BLINK_LED_PIN 25
