@@ -13,6 +13,15 @@ gated entirely by `UI_OLED_ENABLED`, defined in
 [`config/config_rp2350.h`](../config/config_rp2350.h). It compiles to a no-op
 on every other board.
 
+## Boot splash and branding
+
+On boot the display shows a **O.C.P / DELTA CITY / MK1 / by ZOMBI SS**
+splash screen for ~2.2 seconds (any button/encoder input skips it
+immediately), then drops into the Home screen. Every screen title/heading
+throughout the menu uses the same stylized bitmap font. See
+[`doc/branding.md`](branding.md) for font attribution/licensing and how to
+regenerate/extend it.
+
 ## Hardware
 
 - **Display:** SH1106 1.3" 128x64 I2C OLED (NOT SSD1306 - the driver chip
@@ -111,7 +120,8 @@ upload it) and they will show up automatically. Folder-based bulk loading
 and SD-card-backed soundfont demos (see `loaddata_examples.ino`) are not
 re-implemented as menu entries and remain reachable the way they always
 were: via MIDI CC (`z_config.ino`) or by editing `App_Setup()`
-directly.
+directly. See [`doc/sample_capacity.md`](sample_capacity.md) for how much
+you can actually load.
 
 ## Why the Effects menu differs between RP2040 and RP2350
 
