@@ -290,6 +290,40 @@ void App_Setup(void)
     DelayQ_Init2(delBuffer1, delBuffer2, MAX_DELAY_Q);
 #endif
 
+#ifdef SAMPLER_RAM_BUFFER_MAX_SAMPLES
+    /*
+     * Self-sizing sample RAM pool: start big and shrink until the allocation
+     * succeeds, so it claims whatever RAM is actually left after the fixed-size
+     * buffers above instead of relying on a guessed compile-time constant.
+     * Allocated last on purpose - see doc/sample_capacity.md.
+     */
+    {
+        uint32_t sampleCount = SAMPLER_RAM_BUFFER_MAX_SAMPLES;
+        Q1_14 *ramBuffer = NULL;
+
+        while ((ramBuffer == NULL) && (sampleCount >= SAMPLER_RAM_BUFFER_MIN_SAMPLES))
+        {
+            ramBuffer = (Q1_14 *)malloc(sizeof(Q1_14) * sampleCount);
+            if (ramBuffer == NULL)
+            {
+                sampleCount -= (sampleCount / 16);
+            }
+        }
+
+        if (ramBuffer != NULL)
+        {
+            Sampler_UseStaticBuffer(ramBuffer, sampleCount);
+            Serial.printf("Sampler RAM buffer: %" PRIu32 " samples (%" PRIu32 " bytes, ~%.2fs @ %dHz)\n",
+                          sampleCount, sampleCount * (uint32_t)sizeof(Q1_14),
+                          (double)sampleCount / (double)SAMPLE_RATE, SAMPLE_RATE);
+        }
+        else
+        {
+            Serial.printf("Sampler RAM buffer allocation failed! No samples can be loaded.\n");
+        }
+    }
+#endif
+
     /*
      * Here is the interesting part loading some samples
      */
