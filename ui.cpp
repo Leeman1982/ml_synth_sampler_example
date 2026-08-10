@@ -29,7 +29,14 @@
  * @n       (see z_config.ino). Values are persisted to LittleFS so they survive
  * @n       a power cycle.
  * @n
- * @n       See doc/oled_encoder_ui.md for wiring and a full feature list.
+ * @n       Boots into a branded splash screen (O.C.P Delta City MK1, by ZOMBI SS)
+ * @n       for a couple of seconds, then the Home status screen. Every screen
+ * @n       title/heading is rendered with the "Knighthawks" bitmap font from
+ * @n       ui_font_knighthawks.h; headings too wide to render legibly in it fall
+ * @n       back to the normal readable font automatically, see UI_DrawTitle().
+ * @n
+ * @n       See doc/oled_encoder_ui.md for wiring and a full feature list, and
+ * @n       doc/branding.md for the font attribution/regeneration notes.
  * @n
  * @n       Runs on the second core (App_Setup1()/App_Loop1(), see app.cpp) so the
  * @n       OLED I2C traffic never blocks the real-time audio loop on core 0.
@@ -69,6 +76,8 @@
 #include "sf_to_sampler.h"
 #include <fs/fs_access.h>
 
+#include "ui_font_knighthawks.h"
+
 
 /*
  * pin fallbacks (config.h normally provides these, see doc/oled_encoder_ui.md)
@@ -102,6 +111,7 @@
 #define UI_DEBOUNCE_MS              25
 #define UI_RENDER_INTERVAL_MS       33  /* ~30fps */
 #define UI_TOAST_MS                 1200
+#define UI_SPLASH_DURATION_MS       2200
 #define UI_SETTINGS_AUTOSAVE_MS     3000
 #define UI_MENU_STACK_MAX           4
 #define UI_MENU_VISIBLE_ROWS        5
@@ -339,7 +349,8 @@ static const UiMenu s_rootMenu = { "Menu", s_rootItems, sizeof(s_rootItems) / si
  */
 enum UiState
 {
-    UI_STATE_HOME = 0,
+    UI_STATE_SPLASH = 0,
+    UI_STATE_HOME,
     UI_STATE_MENU,
     UI_STATE_EDIT_VALUE,
     UI_STATE_FILE_BROWSE,
@@ -353,7 +364,8 @@ struct UiMenuStackEntry
     uint8_t selected;
 };
 
-static UiState s_state = UI_STATE_HOME;
+static UiState s_state = UI_STATE_SPLASH;
+static uint32_t s_splashStartMs = 0;
 static UiMenuStackEntry s_menuStack[UI_MENU_STACK_MAX];
 static uint8_t s_menuStackDepth = 0;
 static const UiItem *s_editItem = NULL;
@@ -773,22 +785,55 @@ static void UI_DrawTruncated(int x, int y, const char *text)
     u8g2.drawStr(x, y, buf);
 }
 
+/* draws a screen title/heading: uses the branded Knighthawks bitmap font when
+ * the string is short enough to render legibly (see ui_font_knighthawks.h),
+ * otherwise falls back to the normal readable font */
+static void UI_DrawTitle(int x, int yTop, const char *text)
+{
+    for (uint8_t i = 0; i < UI_TITLE_GFX_COUNT; i++)
+    {
+        if (strcmp(ui_titleGfxTable[i].text, text) == 0)
+        {
+            u8g2.drawXBMP(x, yTop, ui_titleGfxTable[i].width, ui_titleGfxTable[i].height, ui_titleGfxTable[i].bits);
+            return;
+        }
+    }
+
+    u8g2.setFont(u8g2_font_6x10_tr);
+    UI_DrawTruncated(x, yTop + 8, text);
+}
+
+static void UI_RenderSplash(void)
+{
+    int y = 2;
+    for (uint8_t i = 0; i < UI_SPLASH_LINE_COUNT; i++)
+    {
+        const UiSplashLine *line = &ui_splashLines[i];
+        int x = (128 - (int)line->width) / 2;
+        if (x < 0)
+        {
+            x = 0;
+        }
+        u8g2.drawXBMP(x, y, line->width, line->height, line->bits);
+        y += line->height + 2;
+    }
+}
+
 static void UI_RenderHome(void)
 {
-    u8g2.setFont(u8g2_font_7x14B_tr);
-    u8g2.drawStr(0, 12, "ML Sampler");
-    u8g2.drawHLine(0, 15, 128);
+    UI_DrawTitle(0, 2, "ML Sampler");
+    u8g2.drawHLine(0, 11, 128);
 
     u8g2.setFont(u8g2_font_6x10_tr);
     char line[24];
     snprintf(line, sizeof(line), "Samples: %u", (unsigned)Sampler_GetSampleCount());
-    u8g2.drawStr(0, 30, line);
+    u8g2.drawStr(0, 24, line);
 
     uint32_t used = Sampler_GetUsedSpace();
     uint32_t maxSpace = Sampler_GetMaxSpace();
     uint32_t pct = maxSpace ? (uint32_t)(((uint64_t)used * 100u) / maxSpace) : 0;
     snprintf(line, sizeof(line), "Mem used: %lu%%", (unsigned long)pct);
-    u8g2.drawStr(0, 42, line);
+    u8g2.drawStr(0, 36, line);
 
     u8g2.setFont(u8g2_font_5x7_tr);
     u8g2.drawStr(0, 62, "Push=Menu  Home=Status");
@@ -800,7 +845,7 @@ static void UI_RenderMenu(void)
     const UiMenu *menu = top->menu;
 
     u8g2.setFont(u8g2_font_6x10_tr);
-    UI_DrawTruncated(0, 9, menu->title);
+    UI_DrawTitle(0, 2, menu->title);
     u8g2.drawHLine(0, 11, 128);
 
     if (menu->count == 0)
@@ -853,7 +898,7 @@ static void UI_RenderMenu(void)
 static void UI_RenderEditValue(void)
 {
     u8g2.setFont(u8g2_font_6x10_tr);
-    UI_DrawTruncated(0, 9, s_editItem->name);
+    UI_DrawTitle(0, 2, s_editItem->name);
     u8g2.drawHLine(0, 11, 128);
 
     char valStr[8];
@@ -878,7 +923,7 @@ static void UI_RenderEditValue(void)
 static void UI_RenderFileBrowse(void)
 {
     u8g2.setFont(u8g2_font_6x10_tr);
-    UI_DrawTruncated(0, 9, s_browse.item->name);
+    UI_DrawTitle(0, 2, s_browse.item->name);
     u8g2.drawHLine(0, 11, 128);
 
     if (s_browse.count == 0)
@@ -904,7 +949,7 @@ static void UI_RenderFileBrowse(void)
 static void UI_RenderInfo(void)
 {
     u8g2.setFont(u8g2_font_6x10_tr);
-    u8g2.drawStr(0, 9, s_infoId == 0 ? "Pin Info" : "Memory Info");
+    UI_DrawTitle(0, 2, s_infoId == 0 ? "Pin Info" : "Memory Info");
     u8g2.drawHLine(0, 11, 128);
 
     u8g2.setFont(u8g2_font_5x7_tr);
@@ -964,6 +1009,9 @@ static void UI_Render(void)
 
     switch (s_state)
     {
+    case UI_STATE_SPLASH:
+        UI_RenderSplash();
+        break;
     case UI_STATE_HOME:
         UI_RenderHome();
         break;
@@ -1020,7 +1068,8 @@ void UI_Setup(void)
 
     UI_LoadSettings();
 
-    s_state = UI_STATE_HOME;
+    s_state = UI_STATE_SPLASH;
+    s_splashStartMs = millis();
     s_menuStackDepth = 0;
 }
 
@@ -1031,7 +1080,15 @@ void UI_Loop(void)
     bool backEdge = UI_Button_Pressed(&s_btnBack);
     bool homeEdge = UI_Button_Pressed(&s_btnHome);
 
-    if (homeEdge)
+    if (s_state == UI_STATE_SPLASH)
+    {
+        bool anyInput = (encStep != 0) || selectEdge || backEdge || homeEdge;
+        if (anyInput || ((millis() - s_splashStartMs) > UI_SPLASH_DURATION_MS))
+        {
+            s_state = UI_STATE_HOME;
+        }
+    }
+    else if (homeEdge)
     {
         s_menuStackDepth = 0;
         s_state = UI_STATE_HOME;
@@ -1074,6 +1131,9 @@ void UI_Loop(void)
             {
                 s_state = s_toastReturnState;
             }
+            break;
+
+        default:
             break;
         }
     }
